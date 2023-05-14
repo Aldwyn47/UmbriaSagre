@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>UmbriaSagre</title> 
+        <style type="text/css">
+            *{
+                font-family: Helvetica;
+                background: #FFFDDD;
+            }
+            #indexMaster{
+                display:flex;
+                flex-direction:column;
+            }
+            #indexLogo{
+                align-self: center;
+            }
+            .navigationBar{
+                display:flex;
+                justify-content: end;
+                background: #4B2D0b;
+            }
+            .navigationElement{
+                box-sizing:border-box;
+                margin-right: 10px;
+                margin-left: 10px;
+                padding: 10px;
+                background: #4B2D0B;
+                color: white;
+                font-size: 24px;
+                border: 0px;
+                cursor: pointer;
+            }
+            .navigationLast{
+                margin-right:20px;
+            }
+            .navigationFirst{
+                margin-left: 20px;
+                margin-right:auto;
+                cursor : default;
+            }
+            .testoCentrato{
+                text-align: center;
+            }
+            .testoPiccolo{
+                font-size: 12px;
+            }
+            .testoMedio {
+                color: #4B2D0B;
+                font-size: 20px;
+            }
+            .testoGrande{
+                color: #4B2D0B;
+                font-size: 50px;
+            }
+            .contentWrapper{
+                padding: 50px;
+                display: flex;
+                flex-direction:column;
+                align-items:center;
+            }
+            .coloreScuro{
+                color: white;
+                background: #4B2D0b;
+            }
+            .ampiezza100{
+                width:100px;
+            }
+            .ErrorMessage {
+                font-size: 10px;
+                color: red;
+            }
+            .RedBorder {
+                border: 1px solid red;
+            }
+
+
+<%
+    if (status=="unknown"){
+//*****SOLO PER VISITATORI NON LOGGATI*****
+%>
+            .inputField{
+                background: white;
+            }
+<%
+    }
+    else{
+//*****SOLO PER VISITATORI LOGGATI******       
+%>
+            .inputField{
+                background: white;
+                width: 300px;
+            }
+            .inputTextArea{
+                height: 100px;
+            }
+            .inputTextMail{
+                width: 500px;
+                height: 300px;
+            }
+            table{
+                border: 1px solid;
+                border-collapse: collapse;
+                border-color : #4B2D0B;
+            }
+            .tableHeader, .tableData{
+                border-top : 1px solid;
+                border-color: #4B2D0B;
+                padding-top: 10px;
+                padding-bottom: 10px;
+                padding-right: 20px;
+                padding-left: 20px;
+                text-align : center;
+                font-size: 14px;
+                font-family: Helvetica;
+            }
+            .tableData{
+                color: #4B2D0B;
+            }
+            .tablePaddingTier0{
+                padding-right: 150px;
+                padding-left: 150px;
+            }
+            .tablePaddingTier1{
+                padding-right: 70px;
+                padding-left: 70px;
+            }
+            .tablePaddingTier2{
+                padding-right: 50px;
+                padding-left: 50px;
+            }
+            .tablePaddingTier3{
+                padding-right: 10px;
+                padding-left: 10px;
+            }
+            #tableWrapper{
+                padding-top: 20px;
+                display : flex;
+                justify-content: center;
+            }
+            .testoEvidenziato{
+                color: yellow;
+            }
+            .testoImportante{
+                color: red;
+            }
+            .twinElements {
+                margin-right: 20px;
+                margin-left: 20px;
+            }
+<%
+    }
+    if (status=="organizzatore"){
+//*****SOLO PER UTENTI ORGANIZZATORI******
+%>
+            #newInputLocandina{
+                display:none;
+            }
+            #newLabelLocandina{
+                color: white;
+                background: #4B2D0b;
+                border: 1px solid black;
+                padding:3px;
+                width: 300px;
+                cursor: pointer;
+                display: inline-block;
+            }
+<%
+    }
+%>     
+        </style>
+        <script type="text/javascript">            
+<%
+    if (status=="unknown"){
+//*****SOLO PER VISITATORI NON LOGGATI*****
+%>
+            const lunghezzaMaxNomeUtente = 40;
+            
+            function homeInitialize(){
+                document.getElementById("indexAccedi").onclick = loginToPanel;
+                document.getElementById("indexRegistrati").onclick = registerToPanel;
+                document.getElementById("indexPanel").innerHTML = "<div class='testoCentrato testoGrande' id='indexMessaggioIniziale'><br>Benvenuto in UmbriaSagre!<br>Per utilizzare il sito effettua l'accesso o registrati<\/div>"
+            }
+
+            function loginToPanel(){ //Questa funzione sostituisce il contenuto del pannello principale con un form usato per il log-in
+                document.getElementById("indexPanel").innerHTML = `
+                <div class="contentWrapper" >
+                    <form class="testoCentrato" action="/utente?_method=PUT" method="POST">
+                        Username:<br>
+                        <input id="loginInputNome" class="inputField" type="text" name="username">
+                        <div id="loginErroreNome" class="ErrorMessage"></div><br>
+                        Password:<br>
+                        <input id="loginInputPassword" class="inputField" type="password" name="password">
+                        <div id="loginErrorePassword" class="ErrorMessage"></div><br><br>
+                        <input id="loginFalsoSubmit" class="coloreScuro ampiezza100" type="button" value="Invia">
+                        <input id="loginVeroSubmit" type="submit" hidden="true">            
+                    </form>
+                </div>`;
+                document.getElementById("loginFalsoSubmit").onclick = loginControlliFinali; //Viene poi associato al click del bottone "Invia" la funzione che esegue i controlli lato client prima di eseguire l'invio
+            }
+
+            function loginControlliFinali(){ //Questa funzione esegue la validazione degli input inseriti dall'utente prima di inviare il form di log-in
+                let pass = document.getElementById("loginInputPassword");
+                let nome = document.getElementById("loginInputNome");
+                pass.classList.remove("RedBorder"); //Prima di ogni controllo vengono resettati i bordi rossi e cancellati i messaggi associati agli errori precedenti
+                nome.classList.remove("RedBorder");
+                let a = document.getElementsByClassName("ErrorMessage");
+                for (el of a)
+                    el.innerHTML="";
+                let invia = true;
+                if (pass.value==""){ //Se l'utente non inserisce una password viene segnalato un errore
+                    pass.classList.add("RedBorder");
+                    document.getElementById("loginErrorePassword").innerHTML = "&egrave obbligatorio inserire una password.";
+                    invia = false;
+                }
+                if (nome.value==""){ //Se l'utente non inserisce un nome utente viene segnalato un errore
+                    nome.classList.add("RedBorder");
+                    document.getElementById("loginErroreNome").innerHTML = "&egrave obbligatorio inserire un nome utente.";
+                    invia = false;
+                }
+                if (invia) //Se non vengono innescati errori, viene cliccato il vero tasto di Submit, che è altrimenti nascoto e non può essere premuto dall'utente
+                    document.getElementById("loginVeroSubmit").click();
+            }
+
+            function registerToPanel(){ //Questa funzione sostituisce il contenuto del pannello principale con un form usato per la registrazione di un nuovo profilo
+                document.getElementById("indexPanel").innerHTML = `
+                <div class="contentWrapper">
+                    <form class="testoCentrato" action="/utente" method="POST">
+                        Username:<br>
+                        <input id="registerInputNome" class="inputField" type="text" name="username">
+                        <div id="registerErroreNome" class="ErrorMessage"></div><br>
+                        Password:<br>
+                        <input id="registerInputPassword" class="inputField" type="password" name="password">
+                        <div id="registerErrorePassword" class="ErrorMessage"></div><br>
+                        Conferma password:<br>
+                        <input id="registerInputConfermaPassword" class="inputField" type="password" name="confermaPassword">
+                        <div id="registerErroreConfermaPassword" class="ErrorMessage"></div><br>
+                        <input id="registerOpzioneOrganizzatore" class="inputField" type="checkbox" name="qualificaOrganizzatore" value="si">
+                        <span class="testoPiccolo" id="registerTestoOpzioneOrganizzatore">Iscrivimi come organizzatore</span><br><br>
+                        <input id="registerFalsoSubmit" class="coloreScuro ampiezza100" type="button" value="Invia">
+                        <input id="registerVeroSubmit" type="submit" hidden="true">      
+                    </form>
+                </div>`;
+                document.getElementById("registerFalsoSubmit").onclick = registerControlliFinali; //Viene poi associato al click del pulsante "Invia" la funzione che esegue i controlli lato Client prima dell'invio del form di registrazione
+            }
+
+            function registerControlliFinali(){ //Questa funzione esegue la validazione degli input inseriti dall'utente prima di inviare il form di registrazione
+                let pass = document.getElementById("registerInputPassword");
+                let cpass = document.getElementById("registerInputConfermaPassword");
+                let nome = document.getElementById("registerInputNome");
+                let a = document.getElementsByClassName("ErrorMessage");
+                for (el of a) //Prima di ogni controllo vengono resettati i bordi rossi e cancellati i messaggi associati agli errori precedenti
+                    el.innerHTML="";
+                nome.classList.remove("RedBorder");
+                pass.classList.remove("RedBorder");
+                cpass.classList.remove("RedBorder");
+                let invia = true;
+                if (pass.value != cpass.value){ //Se la password riscritta non corrisponde alla password viene innescato un errore
+                    cpass.classList.add("RedBorder");
+                    document.getElementById("registerErroreConfermaPassword").innerHTML = "le password non corrispondono.";
+                    invia = false;
+                }
+                if (pass.value==""){ //Se non viene inserita alcuna password viene innescato un errore
+                    pass.classList.add("RedBorder");
+                    document.getElementById("registerErrorePassword").innerHTML = "&egrave obbligatorio inserire una password.";
+                    invia = false;
+                }
+                if (nome.value==""){ //Se non viene specificato un nome utente viene innescato un errore
+                    nome.classList.add("RedBorder");
+                    document.getElementById("registerErroreNome").innerHTML = "&egrave obbligatorio inserire un nome utente.";
+                    invia = false;
+                }
+                else if (nome.value.length>lunghezzaMaxNomeUtente){ //Se il nome utente scelto è troppo lungo viene innescato un errore
+                    nome.classList.add("RedBorder");
+                    document.getElementById("registerErroreNome").innerHTML = "il nome utente scelto è troppo lungo.";
+                    invia = false;
+                }
+                else{ //Una chiamata AJAX viene usata per verificare nel Server se il nome utente scelto è libero
+                    let chiamata = new XMLHttpRequest();
+                    chiamata.onload = function(){
+                        let j = JSON.parse(chiamata.responseText);
+                        if (j.result==true){ //Se il nome utente è già preso viene innescato un errore
+                            nome.classList.add("RedBorder");
+                            document.getElementById("registerErroreNome").innerHTML = "questo nome utente &egrave già in uso.";
+                            invia = false;
+                        }
+                        else{
+                            if (invia) //Se non vengono rilevati errori viene premuto il vero tasto di Submit, che è altrimenti nascosto e non può essere premuto dall'utente
+                                document.getElementById("registerVeroSubmit").click();
+                        }
+                    }
+                    chiamata.open("GET","isUsernamePreso?nome="+nome.value);
+                    chiamata.send();
+                }
+            }
+<%
+    }
+    else{
+//*****SOLO PER VISITATORI LOGGATI******       
+%>
+
+            const codeOk = 200;
+            const codeCreated = 201;
+            const codeOkNoContent = 204;
+            const lunghezzaMaxTitoloMessaggi = 100;
+            const lunghezzaMaxMessaggi = 5000;
+            const publicPath = "/public/"; //Variabile globale che identifica la directory esposta all'esterno
+            const directoryLocandine = "locandine/"; //Variabile globale che identifica la directory in cui risiedono le locandine
+            const directoryAssets = "assets/"; //Variabile globale che identifica la directory in cui risiedono gli asset grafici
+            
+            function esci(){ //Questa funzione innesca il log-out tramite chiamata AJAX
+                let chiamata = new XMLHttpRequest();
+                chiamata.onload = function(){
+                        document.getElementsByTagName("html")[0].innerHTML = chiamata.responseText;
+                }
+                chiamata.open("DELETE","/sessione");
+                chiamata.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+                chiamata.send();
+            }
+            
+            function convertiData(arg){ //Questa funzione esegue un post-processing sui campi di tipo "Date" che vengono estratti lato Server dal database postgresql, riportandoli al formato YYYY-MM-DD
+                //Questo post-processing è necessario perché JavaScript purtroppo altera automaticamente i valori di tipo "Date" estratti da postgreSql applicando la timezone locale e aggiungendo informazioni sull'ora: nel caso dell'Italia questo fa scorrere la data indietro di un giorno
+                let yyyymmdd = (arg.toString()).substring(0,10); //Per prima cosa si isola la parte che ci interessa della data (ovvero solo YYYY-MM-DD)
+                let dt = new Date(yyyymmdd); //Si crea un oggetto di tipo Date a partire dalla stringa YYYY-MM-DD
+                let dt2 = new Date(dt.getTime() + 60 * 60 * 24 * 1000); //Si usa il metodo getTime per ottenere il valore in millisecondi dell'oggetto appena creato. A questo valore si aggiunge un giorno (in millisecondi). Con il nuovo valore si crea un nuovo oggetto di tipo Date, che contiene quindi la data corretta.
+                let result = dt2.toISOString().substring(0,10); //Conversione al formato YYYY-MM-DD
+                return result;
+            }
+
+            function creaFiltriRicerca(){ //Questa funzione riempie il pannello principale con i filtri di ricerca che vengono usati per filtrare gli eventi. Crea inoltre l'elemento "tableWrapper", che verrà in seguito popolato dalle funzioni che scaricano dal Server gli Eventi
+                document.getElementById("indexPanel").innerHTML=`
+                    <div class="contentWrapper">
+                        <div id="opzioniFiltra">
+                            <input id="filtroData" type="date" class="inputField twinElements">
+                            <select id="filtroComune" class="inputField twinElements">
+                                <option></option>
+                            </select>
+                        </div>
+                        <div id="tableWrapper">
+                        </div>
+                    </div>
+                `;
+                let chiamata = new XMLHttpRequest();
+                chiamata.onload = function(){
+                    if (chiamata.status!=codeOk)
+                        document.getElementsByTagName("html")[0].innerHTML = chiamata.responseText;
+                    else{ //Gli elementi di tipo "option" con cui funziona il filtro dei comuni vengono scaricati direttamente dal Server tramite chiamata AJAX
+                        let sel = document.getElementById("filtroComune");
+                        let b = JSON.parse(chiamata.responseText);
+                        for (a of b){
+                            let com = document.createElement('option');
+                            com.innerHTML=a.comune;
+                            sel.append(com);
+                        }
+                    }
+                }
+                chiamata.open("GET","/comuni");
+                chiamata.send();
+                document.getElementById("filtroData").onchange = applicaFiltri; //Ogni volta che i due filtri cambiano valore viene invocata la funzione ApplicaFiltri per produrre cambiamenti nella tabella sottostante
+                document.getElementById("filtroComune").onchange = applicaFiltri;
+            }
+
+            function applicaFiltri(){ //Questa funzione procede ad oscurare o a mostrare determinate righe di una tabella contenente Eventi sulla base del valore dei filtri soprastanti
+                let fc = document.getElementById("filtroComune").value;
+                let fd = document.getElementById("filtroData").value;
+                let rows = document.getElementsByClassName("tableRow");
+                for (el of rows){ //L'applicazione dei filtri fa uso di un'espressione booleana basata su quattro regole:
+                    //-Se la riga è la riga degli Header, non può essere resa invisibile a prescindere
+                    //-Se il filtro data contiene un valore si controlla se questo è compreso tra data di inizio e data di fine dell'evento: se la risposta è no, la riga viene resa invisibile
+                    //-Se il filtro comune contiene un valore, si controlla se questo corrisponde al comune in cui ha luogo l'evento: se la risposta è no, la riga viene resa invisibile
+                    //-Se la riga è "assolutamenteInvisibile", questa non viene mai mostrata
+                    if (el.id!="tableHeaderRow" && (  (fd!="" && (fd<el.childNodes[2].innerHTML || fd>el.childNodes[3].innerHTML))  ||  (fc!="" && fc!=el.childNodes[1].innerHTML)  ||  (el.assolutamenteInvisibile==true))  )
+                        el.hidden=true; 
+                    else
+                        el.hidden=false;
+                }
+            }
+
+            function dettagliToPanel(count, IndietroFun){//Questa funzione serve a mostrare nel pannello principale i dettagli relativi a un evento specifico
+                let filtroComune = document.getElementById("filtroComune").value; //Prima di sostituire il contenuto del pannello principale, se ne copia lo stato
+                let filtroData = document.getElementById("filtroData").value; //Questo include il salvare il valore dei filtri
+                let formerHTML = document.getElementById("indexPanel").innerHTML; //E il salvare il codice html contenuto nel pannello (che verrà presto rimpiazzato)
+                let idsagra = document.getElementById(`idSagra${count}`).innerHTML; //L'id della sagra è necessario per effettuare una chiamata AJAX e va quindi salvato a parte prima di sostituire l'html del pannello
+                document.getElementById("indexPanel").innerHTML=`
+                    <div class="contentWrapper">
+                        <div id="wrapperDettagli" class="testoCentrato testoMedio">  
+                            <div>Indirizzo: </div><div id="dettagliIndirizzoSagra"></div><br> 
+                            <div class="rimuovibile" id="scritteDescrizione">Descrizione: </div><div class="rimuovibile" id="dettagliDescrizioneSagra"></div><br class="rimuovibile" id="brDescrizione">
+                            <input id="tastoIndietro" type="button" class="coloreScuro ampiezza100" value="Indietro"><br>
+                        </div>
+                    </div>
+                `;
+                let tastoIndietro = document.getElementById("tastoIndietro"); //Una volta completata la sostituzione del contenuto del pannello si procede ad inizializzare il tasto "indietro"
+                tastoIndietro.filtroComune = filtroComune; //Lo stato precedente del pannello viene salvato negli attributi del tasto
+                tastoIndietro.filtroData = filtroData;
+                tastoIndietro.formerHTML = formerHTML;
+                tastoIndietro.onclick = IndietroFun; //Quando viene cliccato, il tasto indietro invoca una tra varie funzioni di ripristino possibili: tutte lavorano con lo stato salvato in precedenza, ma è il chiamante di dettagliToPanel a dover specificare quale usare
+                let chiamata = new XMLHttpRequest(); //I campi "indirizzo" e "descrizione" vanno reperiti invocando un'apposita API che restituisce tutte le informazioni relative a un singolo Evento
+                chiamata.onload = function(){
+                    if (chiamata.status!=codeOk)
+                        document.getElementsByTagName("html")[0].innerHTML = chiamata.responseText;
+                    else{
+                        let dati = JSON.parse(chiamata.responseText);
+                        document.getElementById("dettagliIndirizzoSagra").innerHTML = dati[0].indirizzosagra;
+                        if (dati[0].descrizionesagra!="")
+                            document.getElementById("dettagliDescrizioneSagra").innerHTML = dati[0].descrizionesagra;
+                        else{
+                            let elements = document.getElementsByClassName("rimuovibile");
+                            for (el of elements)
+                                el.remove();
+                        }
+                    }
+                }
+                chiamata.open("GET","evento?idsagra="+idsagra);
+                chiamata.send();
+            }
+
+            function messaggioNuovoToPanel(count, modalitàScrittura, IndietroFun){ //Questa funzione svolge le operazioni preliminari legate al sostituire il contenuto del pannello con un form usato per creare un nuovo messaggio
+                let filtroComune = document.getElementById("filtroComune").value; //Prima di sostituire il contenuto del pannello principale, se ne copia lo stato
+                let filtroData = document.getElementById("filtroData").value;
+                let formerHTML = document.getElementById("indexPanel").innerHTML;
+                messaggioPromptToPanel(count, modalitàScrittura); //La funzione che crea effettivamente il form può essere invocata con tre modalità diverse ("/messaggio","/broadcast","/risposta"): il chiamante di messaggioNuovoToPanel ne specifica una e la funzione si limita a passarla alla sottoprocedura messaggioPromptToPanel 
+                let tastoIndietro = document.getElementById("tastoIndietro");
+                tastoIndietro.filtroComune = filtroComune; //Lo stato precedente del pannello viene salvato negli attributi del tasto indietro
+                tastoIndietro.filtroData = filtroData;
+                tastoIndietro.formerHTML = formerHTML;
+                tastoIndietro.onclick = IndietroFun; //Quando viene cliccato, il tasto indietro invoca una tra varie funzioni di ripristino possibili: tutte lavorano con lo stato salvato in precedenza, ma è il chiamante di dettagliToPanel a dover specificare quale usare
+            }
+
+            function messaggioPromptToPanel(count, action){ //Questa funzione si occupa di sostituire il contenuto del pannello principale con un form usato per scrivere un nuovo messaggio
+                let destinatario; //Prima di sostituire il vecchio html che riempie il pannello, occorre salvare alcune informazioni
+                let nomeSagra;
+                if (action=="/messaggio") //Le informazioni da salvare variano sulla base della modalità con cui viene invocata la funzione
+                    destinatario = document.getElementById(`organizzatoreSagra${count}`).innerHTML;
+                else if (action=="/broadcast"){
+                    destinatario = document.getElementById(`idSagra${count}`).innerHTML;
+                    nomeSagra = document.getElementById(`nomeSagra${count}`).innerHTML;
+                }
+                else{
+                    destinatario = document.getElementById("mittenteMessaggio").innerHTML;
+                }
+                document.getElementById("indexPanel").innerHTML=`
+                    <div class="contentWrapper">
+                        <div id="wrapperDettagli" class="testoCentrato testoMedio">
+                            <div>Il seguente messaggio verrà recapitato a <span id="testoExtra"></span><span id="mailDestinatario"></span></div><br>
+                            <div><span>Titolo: </span><input type="text" class="inputField" id="mailTitolo"></div>
+                            <div class="ErrorMessage" id="erroreMailTitolo"></div><br>    
+                            <textarea class="inputField inputTextMail" id="mailContenuto"></textarea><br>
+                            <div class="ErrorMessage" id="erroreMailContenuto"></div><br>    
+                            <input id="mailInvia" type="button" class="coloreScuro ampiezza100 twinElements" value="Invia"><input id="tastoIndietro" type="button" class="coloreScuro ampiezza100 twinElements" value="Indietro"><br>
+                        </div>
+                    </div>
+                `;
+                let mailInvia = document.getElementById("mailInvia"); //Dopo la sostituzione dell'html si usano le informazioni salvate in precedenza per riempire campi e attivare bottoni
+                let campoDestinatario = document.getElementById("mailDestinatario");
+                mailInvia.destinatario = destinatario;
+                if (action=="/messaggio"){
+                    campoDestinatario.innerHTML = destinatario;
+                    mailInvia.action = action;
+                }
+                else if (action=="/broadcast"){
+                    document.getElementById("testoExtra").innerHTML = "tutte le persone iscritte a ";
+                    campoDestinatario.innerHTML = nomeSagra;
+                    mailInvia.action = action;
+                }
+                else{
+                    campoDestinatario.innerHTML = destinatario;
+                    mailInvia.action = "/messaggio";
+                }
+                mailInvia.onclick = messaggioNuovoControlliFinali; //Quando viene premuto il tasto Invia hanno luogo i controlli finali prima dell'invio delle informazioni del form
+            }
+
+            function messaggioNuovoControlliFinali(){
+                let target = this.action;
+                let destinatario = this.destinatario; 
+                let mailtitolo = document.getElementById("mailTitolo");
+                let mailcontenuto = document.getElementById("mailContenuto");
+                mailtitolo.classList.remove("RedBorder"); //Prima di eseguire un controllo vengono rimossi i messaggi di errore dei controlli precedenti
+                mailcontenuto.classList.remove("RedBorder");
+                let errori = document.getElementsByClassName("ErrorMessage");
+                for (el of errori)
+                    el.innerHTML="";
+                let invia = true;
+                let titolo = mailtitolo.value;
+                let contenuto = mailcontenuto.value;
+                if (titolo==""){ //Se il messaggio non contiene un titolo viene innescato un errore
+                    mailtitolo.classList.add("RedBorder");
+                    document.getElementById("erroreMailTitolo").innerHTML="il messaggio deve avere un titolo";
+                    invia = false;
+                }
+                else if (titolo.length>lunghezzaMaxTitoloMessaggi){ //Se il titolo del messaggio è troppo lungo viene innescato un errore
+                    mailtitolo.classList.add("RedBorder");
+                    document.getElementById("erroreMailTitolo").innerHTML="il titolo è troppo lungo, max "+lunghezzaMaxTitoloMessaggi+" caratteri";
+                    invia = false;
+                }
+                if (contenuto==""){ //Se il messaggio non contiene un contenuto, viene innescato un errore
+                    mailcontenuto.classList.add("RedBorder");
+                    document.getElementById("erroreMailContenuto").innerHTML="il messaggio deve avere un contenuto";
+                    invia = false;
+                }
+                else if (contenuto.length>lunghezzaMaxMessaggi){ //Se il contenuto è troppo lungo, viene innescato un errore
+                    mailcontenuto.classList.add("RedBorder");
+                    document.getElementById("erroreMailContenuto").innerHTML="il messaggio è troppo lungo, max "+lunghezzaMaxMessaggi+" caratteri";
+                    invia = false;
+                }
+                if (invia){ //Se non vengono rilevati errori, ha luogo l'invio. L'action e i parametri usati nell'invio vengono letti dagli attributi del tasto e dai campi del form
+                    let chiamata = new XMLHttpRequest();
+                    chiamata.onload = function(){
+                        document.getElementsByTagName("html")[0].innerHTML = chiamata.responseText;
+                    }
+                    chiamata.open("POST",target);
+                    chiamata.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+                    chiamata.send("destinatarioMessaggio="+destinatario+"&titoloMessaggio="+titolo+"&contenutoMessaggio="+contenuto);
+                }
+            }
+            
+            function tableRestoreHTML(contestoEreditato){ //Questa funzione viene invocata dalle procedure di ripristino per riportare il codice html di una tabella Eventi (salvato in precedenza) all'interno del pannello principale
+                document.getElementById("indexPanel").innerHTML = contestoEreditato.formerHTML; //Il parametro "contestoEreditato" è un puntatore a un pulsante "Indietro" che è stato premuto, i cui attributi contengono le informazioni necessarie al ripristino
+                document.getElementById("filtroData").value = contestoEreditato.filtroData; //Dopo aver ripristinato l'html, anche i filtri vengono fatti tornare al loro ultimo valore
+                document.getElementById("filtroComune").value = contestoEreditato.filtroComune;
+                document.getElementById("filtroComune").onchange = applicaFiltri; //I filtri vengono quindi riattivati
+                document.getElementById("filtroData").onchange = applicaFiltri;
+            }
+
+            function tableCreateTD(paddingtier, nome){ //Questa funzione viene invocata per creare un nuovo elemento di tipo TD all'interno di una riga di una tabella
+                let td = document.createElement('td');
+                if (nome!="")
+                    td.id = nome; //Se il chiamante lo specifica, si può includere anche un id
+                td.classList.add("tableData");
+                td.classList.add(paddingtier); //Il chiamante deve specificare un paddingtier, il quale stabilisce la dimensione in larghezza del campo
+                return td; //Una volta inizializzato l'elemento TD, un riferimento a esso viene restituito al chiamante
+            }
+
+            function tableCreateNewButton(nomeasset, hint, id, count){ //Questa funzione viene invocata per creare un nuovo bottone-icona all'interno delle tabelle
+                let nb = document.createElement('input');
+                nb.id = id+count; //L'id assegnato è una combinazione tra "id" che esprime la natura del bottone e "count", che esprime la riga specifica a cui è legato
+                nb.type="image"; //Il bottone è di tipo "image" perché il suo aspetto estetico si basa su asset grafici personalizzati creati ad hoc
+                nb.src=publicPath+directoryAssets+nomeasset; //Questi asset risiedono tutti nella directory /public/assets/ del Server, ma è il chiamante a dover decidere quale usare (e quindi che aspetto avrà l'icona)
+                nb.title=hint; //Il chiamante deve anche specificare il suggerimento che viene mostrato all'utente quando sorvola il tasto con il mouse
+                nb.rowCount = count; //Il funzionamento di qualsiasi bottone di qualsiasi tabella si basa sull'uso di un contatore di riga con cui esso "ricorda" in quale riga della tabella deve cercare le informazioni che gli servono per lavorare. Questo contatore viene passato dal chiamante e salvato in un attributo ad hoc
+                return nb; //Una volta inizializzato l'elemento 'input', un riferimento a esso viene restituito al chiamante
+            }
+
+            function tableRowAppendBaseFields(nr,count,row,DettagliFun){ //Molte funzionalità della Web App devono costruire tabelle in larga parte simili tra loro le cui righe rappresentano Eventi: i campi di queste righe (oltre a due bottoni specifici) sono gli stessi in tutte le tabelle, ragion per cui la loro creazione fa uso di una procedura standardizzata
+                nr.classList.add("tableRow"); //La procedura lavora con un riferimento a un elemento di tipo "tr" creato in precedenza dal chiamante che viene passato come parametro
+                nr.id="tableRow"+count;
+                let td = tableCreateTD("tablePaddingTier1", "nomeSagra"+count); //Tramite la funzione tableCreateTD vengono creati i campi della riga che ospitano le informazioni
+                td.innerHTML = row.nomesagra; //Le informazioni con cui riempire i campi sono contenute nel parametro "row" passato dall'esterno
+                nr.append(td);
+                td = tableCreateTD("tablePaddingTier2", "comuneSagra"+count);
+                td.innerHTML = row.comunesagra;
+                nr.append(td);
+                td = tableCreateTD("tablePaddingTier2", "dataInizioSagra"+count);
+                td.innerHTML = convertiData(row.datainiziosagra);
+                nr.append(td);
+                td = tableCreateTD("tablePaddingTier2", "dataFineSagra"+count);
+                td.innerHTML = convertiData(row.datafinesagra); //Le informazioni di tipo "Date" devono subire un pre-processing prima di poter venir usate per riempire i campi
+                nr.append(td);
+                td = tableCreateTD("tablePaddingTier2", "numeroIscrittiSagra"+count);
+                td.innerHTML = row.numeroiscrittisagra;
+                nr.append(td);
+                td = tableCreateTD("tablePaddingTier3","");
+                nb = tableCreateNewButton("Photo.jpg", "Visualizza locandina", "tastoLocandina",count);
+                nb.onclick = tastoLocandina; //Alcuni campi non contengono informazioni testuali ma sono bottoni cliccabili
+                if (row.locandinasagra==false)
+                    nb.hidden="true";
+                td.append(nb);
+                nr.append(td);
+                td = tableCreateTD("tablePaddingTier3","");
+                nb = tableCreateNewButton("Eye.jpg", "Vedi più dettagli", "tastoDettagli",count);
+                nb.onclick = DettagliFun; //Il bottone usato per mostrare i dettagli è agganciato a una funzione che può variare a seconda dei casi, e va quindi specificata dal chiamante
+                td.append(nb);
+                nr.append(td);
+            }
+
+            function tableRowAddHiddenField(nr, nome, contenuto){ //Alcune informazioni scaricate dal server non vanno mostrate direttamente nella tabella perché non sono utili per l'utente. Servono però per il funzionamento di alcuni tasti e vengono quindi salvate in forma di campi nascosti della riga
+                let hf = document.createElement('div');
+                hf.hidden="true";
+                hf.id=nome; //L'id del campo nascosto viene specificato dal chiamante
+                hf.innerHTML=contenuto; //Così come il suo contenuto
+                nr.append(hf);
+            }
+
+            function tastoLocandina(){ //Questa funzione viene invocata quando un utente clicca sul tasto per visualizzare la locandina di un evento
+                let count = this.rowCount; //La funzione ottiene il numero di riga dall'attributo ad hoc del tasto
+                let nomeSagra = document.getElementById(`nomeSagra${count}`).innerHTML; //Tramite l'indice di riga procede a scoprire nome, comune, datainizio e datafine dell'Evento
+                let comuneSagra = document.getElementById(`comuneSagra${count}`).innerHTML;
+                let dataInizioSagra = document.getElementById(`dataInizioSagra${count}`).innerHTML;
+                let dataFineSagra = document.getElementById(`dataFineSagra${count}`).innerHTML;
+                let target = nomeSagra+comuneSagra+dataInizioSagra+dataFineSagra+".jpg"; //Usa quindi le quattro informazioni per ricostruire il nome che ha il file della locandina nel Server, e ne chiede l'apertura
+                window.open(publicPath+directoryLocandine+target,'_blank');
+            }
+            
+            function checkNuoviMessaggi(){ //Questa funzione invoca un'API del Server per scoprire se il visitatore ha nuovi messaggi non letti.
+                let chiamata = new XMLHttpRequest();
+                chiamata.onload = function(){
+                    let j = JSON.parse(chiamata.responseText);
+                    if (j.result==true) //Se risultano messaggi non letti, il testo del tasto "Messaggi" della home viene evidenziato in giallo
+                        document.getElementById("indexMessaggi").classList.add("testoEvidenziato");
+                }
+                chiamata.open("GET","isNuoviMessaggi");
+                chiamata.send();
+            }
+            
+            function mailboxToPanel(){ //Questa funzione sostituisce il contenuto del pannello principale con la mailbox di un visitatore
+                document.getElementById("indexMessaggi").classList.remove("testoEvidenziato"); //Quando il visitatore accede alla sua mailbox, il colore evidenziato del tasto Messaggi viene rimosso
+                document.getElementById("indexPanel").innerHTML=`
+                    <div class="contentWrapper">
+                        <div id="opzioniFiltra" class="testoMedio">
+                            Mittente: 
+                            <select id="filtroNomeMittente" title="Seleziona un mittente" class="inputField twinElements">
+                                <option></option>
+                            </select>
+                        </div>
+                        <div id="tableWrapper">
+                            <table id="table">
+                                <tr class="tableRow" id="tableHeaderRow"><th class="tableHeader coloreScuro tablePaddingTier0">Titolo messaggio:</th><th class="tableHeader coloreScuro tablePaddingTier3"></th><th class="tableHeader coloreScuro tablePaddingTier1">Mittente:</th><th class="tableHeader coloreScuro tablePaddingTier2">Data:</th><th class="tableHeader coloreScuro tablePaddingTier3"</th></tr>
+                            </table>
+                        </div>
+                    </div>
+                `;
+                document.getElementById("filtroNomeMittente").onchange = applicaFiltroMittente; //Il filtro sul nome del mittente viene predisposto per attivarsi ogni volta che il visitatore sceglie un nuovo valore per esso
+                let chiamata = new XMLHttpRequest();
+                chiamata.onload = function(){
+                    if (chiamata.status!=codeOk)
+                        document.getElementsByTagName("html")[0].innerHTML = chiamata.responseText;
+                    else{ //I messaggi vengono scaricati dal Server tramite una chiamata AJAX e poi usati per costruire una tabella che ricorda molto quella degli Eventi
+                        let dati = JSON.parse(chiamata.responseText);
+                        let t = document.getElementById("table");
+                        let count = 1;
+                        let setMittenti = new Set(); //Contestualmente alla creazione della tabella contenente i messaggi vengono anche salvati in un Set tutti i possibili mittenti (si usa un Set per risolvere a monte il problema di eventuali mittenti ripetuti)
+                        for (row of dati){
+                            let nr = document.createElement('tr');
+                            let dataCorretta = convertiData(row.datamessaggio);
+                            nr.classList.add("tableRow");
+                            nr.id="tableRow"+count;
+                            let td = tableCreateTD("tablePaddingTier0", "titoloMessaggio"+count);
+                            td.innerHTML = row.titolomessaggio;
+                            td.onclick = mailboxAccediMessaggio;  //Il titolo del messaggio viene reso anche cliccabile: cliccandolo l'Utente accede al contenuto del messaggio
+                            td.style.cursor = "pointer"; //Per segnalare chiaramente all'utente che può cliccare sul titolo, viene usata un'icona più adeguata per il puntatore del mouse
+                            td.title="Clicca per visualizzare il messaggio";
+                            td.rowCount = count;
+                            nr.append(td);
+                            td = tableCreateTD("tablePaddingTier3",""); //Un campo speciale può venire occupato tramite un'icona ad hoc che segnala il fatto che il messaggio non è mai stato letto
+                            nb = tableCreateNewButton("New.jpg", "Stai visualizzando questo messaggio per la prima volta", "isNuovo",count); //L'icona viene creata come tutti gli altri pulsanti basati su icona, ma non viene resa cliccabile
+                            if (row.isnuovomessaggio=='no')
+                                nb.hidden="true"; //Se il messaggio è stato già letto almeno una volta, l'icona viene subito nascosta
+                            else
+                                nb.style.cursor = "default"; //L'icona del puntatore del mouse viene cambiata perché l'icona ad hoc non è cliccabile
+                            td.append(nb);
+                            nr.append(td);
+                            td = tableCreateTD("tablePaddingTier1", "mittenteMessaggio"+count);
+                            td.innerHTML = row.mittentemessaggio;
+                            nr.append(td);
+                            setMittenti.add(row.mittentemessaggio); //Oltre a venir usato per riempire il campo apposito, ogni mittente viene anche registrato nel Set creato in precedenza
+                            td = tableCreateTD("tablePaddingTier2", "dataMessaggio"+count);
+                            td.innerHTML = dataCorretta;
+                            nr.append(td);
+                            td = tableCreateTD("tablePaddingTier3",""); //Viene creato il campo dedicato al tasto per la cancellazione dei messaggi
+                            nb = tableCreateNewButton("Trash.jpg", "Cancella il messaggio", "tastoCancellaMessaggio",count);
+                            nb.onclick = mailboxTastoCancella;
+                            td.append(nb);
+                            nr.append(td);
+                            tableRowAddHiddenField(nr, "idMessaggio"+count, row.idmessaggio); //Come campo nascosto di ogni riga viene salvato l'id del messaggio (nel database lato server questo campo è la chiave primaria che distingue ogni messaggio dagli altri)
+                            t.append(nr);
+                            count++;
+                        }
+                        let sel = document.getElementById("filtroNomeMittente");
+                        let mittentiSorted = Array.from(setMittenti).sort(); //Il Set contenente i mittenti viene ordinato. Siccome la funzione sort() non è disponibile per i Set, il contenuto del Set deve essere usato per creare un Array su cui poi invocare sort()
+                        for (el of mittentiSorted){ //I mittenti ordinati in ordine alfabetico vengono quindi usati per popolare il filtro mittenti
+                            let mitt = document.createElement('option');
+                            mitt.innerHTML=el;
+                            sel.append(mitt);
+                        }
+                    }
+                }
+                chiamata.open("GET","/messaggi");
+                chiamata.send();
+            }
+            
+            function mailboxTastoCancella(){ //Questa funzione viene attivata quando un visitatore clicca sul tasto per cancellare un messaggio
+                let count = this.rowCount; //L'indice di riga viene reperito tramite l'attributo ad hoc
+                let row = document.getElementById(`tableRow${count}`); //L'indice di riga viene quindi usato per ottenere un riferimento alla riga associata al messaggio che sta per venir cancellato
+                let idmessaggio = document.getElementById(`idMessaggio${count}`).innerHTML; //L'indice di riga viene anche usato per ottenere l'id del messaggio da cancellare
+                let chiamata = new XMLHttpRequest(); //Viene invocata lato server l'API responsabile della cancellazione del messaggio, passando l'id messaggio come parametro
+                chiamata.onload = function(){
+                    if (chiamata.status!=codeOkNoContent)
+                        document.getElementsByTagName("html")[0].innerHTML = chiamata.responseText;
+                    else{ 
+                        row.hidden=true; //Se la chiamata ha successo, la riga corrispondente nella tabella viene nascosta
+                        row.assolutamenteInvisibile=true; //La riga viene inoltre etichettata affinché rimanga invisibile durante eventuali oscuramenti e ripristini operati dai filtri
+                    }
+                }
+                chiamata.open("DELETE","/messaggio");
+                chiamata.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+                chiamata.send("idmessaggio="+idmessaggio);
+            }
+            
+            function mailboxAccediMessaggio(){ //Questa funzione viene usata per riempire il pannello principale con i dettagli di un messaggio specifico che il visitatore vuole leggere
+                let count = this.rowCount; //L'indice di riga viene reperito tramite l'attributo ad hoc
+                document.getElementById(`isNuovo${count}`).hidden="true"; //Tramite l'indice di riga viene per prima cosa oscurata l'icona che indica che il messaggio non è mai stato letto 
+                let filtroNomeMittente = document.getElementById("filtroNomeMittente").value; //Prima di sostituire il contenuto del pannello, il suo stato viene salvato
+                let idmessaggio = document.getElementById(`idMessaggio${count}`).innerHTML; //Prima di sostituire l'html del pannello bisogna inoltre salvare anche l'id del messaggio a parte
+                let formerHTML = document.getElementById("indexPanel").innerHTML;
+                document.getElementById("indexPanel").innerHTML=`
+                    <div class="contentWrapper">
+                        <div id="wrapperDettagli" class="testoCentrato testoMedio">  
+                            <div>Mittente: <span id="mittenteMessaggio" class="testoImportante"></span></div><br> 
+                            <div>Titolo: <span id="titoloMessaggio" class="testoImportante"></span></div><br>
+                            <div id="contenutoMessaggio"></div><br>
+                            <input id="tastoIndietro" type="button" class="coloreScuro ampiezza100 twinElements" value="Indietro">
+                            <input id="tastoRispondi" type="button" class="coloreScuro ampiezza100 twinElements" value="Rispondi"><br>
+                        </div>
+                    </div>
+                `;
+                let tastoIndietro = document.getElementById("tastoIndietro"); //Terminata la sostituzione dell'html si procede ad attivare il tasto indietro
+                tastoIndietro.filtroNomeMittente = filtroNomeMittente;
+                tastoIndietro.formerHTML = formerHTML; //Lo stato precedente viene salvato in due attributi ad-hoc del tasto indietro
+                tastoIndietro.onclick = mailboxRestore; //All'evento di click sul tasto indietro viene associata la funzione che ripristina la mailbox del visitatore nel pannello
+                document.getElementById("tastoRispondi").onclick = mailCreaRisposta; //Al tasto rispondi viene invece associata la funzione che avvia la creazione di un messaggio di risposta
+                let chiamata = new XMLHttpRequest(); //Tramite una chiamata AJAX viene invocata lato Server l'API che si occupa di fornire i dettagli di un singolo messaggio
+                chiamata.onload = function(){
+                    if (chiamata.status!=codeOk)
+                        document.getElementsByTagName("html")[0].innerHTML = chiamata.responseText;
+                    else{
+                        let dati = JSON.parse(chiamata.responseText); //Se la chiamata ha successo, i dati ricevuti vengono usati per popolare i campi corrispondenti
+                        document.getElementById("mittenteMessaggio").innerHTML = dati[0].mittentemessaggio;
+                        document.getElementById("titoloMessaggio").innerHTML = dati[0].titolomessaggio;
+                        document.getElementById("contenutoMessaggio").innerHTML = dati[0].contenutomessaggio;
+                    }
+                }
+                chiamata.open("GET","/messaggio?idmessaggio="+idmessaggio); //A questa chiamata viene affidato come parametro l'id messaggio salvato in precedenza
+                chiamata.send();
+            }
+            
+            function mailboxRestore(){ //Questa funzione si occupa di ripristinare la mailbox del visitatore quando clicca sul tasto "Indietro"
+                document.getElementById("indexPanel").innerHTML = this.formerHTML; //Viene ripristinato l'html della mailbox
+                document.getElementById("filtroNomeMittente").value = this.filtroNomeMittente;
+                document.getElementById("filtroNomeMittente").onchange = applicaFiltroMittente; //Il filtro mittente viene riattivato
+                let nrows = document.getElementsByClassName("tableRow").length;
+                let count = 1;
+                while(count<nrows){ //Vengono riattivati i bottoni di ogni riga
+                    let areaTitolo = document.getElementById(`titoloMessaggio${count}`);
+                    areaTitolo.rowCount = count; //L'attributo ad-hoc che contiene l'indice di riga deve essere nuovamente dichiarato
+                    areaTitolo.onclick = mailboxAccediMessaggio; //Il titolo del messaggio è esso stesso un bottone nella mailbox
+                    let tastoCancellaMessaggio = document.getElementById(`tastoCancellaMessaggio${count}`);
+                    tastoCancellaMessaggio.rowCount = count;
+                    tastoCancellaMessaggio.onclick = mailboxTastoCancella;
+                    count++;
+                }
+            }
+            
+            function mailCreaRisposta(){ //Questa funzione viene invocata quando un visitatore preme sul tasto "Rispondi" mentre sta leggendo un messaggio
+                let tastoIndietro = document.getElementById("tastoIndietro"); //In quel momento nel pannello è presente anche un tasto indietro che contiene in due attributi ad-hoc il salvataggio di stato della mailbox
+                let formerHTML = tastoIndietro.formerHTML; //La funzione per prima cosa copia lo stato della mailbox in variabili locali
+                let filtroNomeMittente = tastoIndietro.filtroNomeMittente;
+                messaggioPromptToPanel(this.count, "/risposta"); //Procede quindi a sostituire il contenuto del pannello con il form per la creazione di un nuovo messaggio
+                tastoIndietro = document.getElementById("tastoIndietro"); //Il nuovo tasto indietro che viene creato viene resto identico al precedente
+                tastoIndietro.filtroNomeMittente = filtroNomeMittente;
+                tastoIndietro.formerHTML = formerHTML;
+                tastoIndietro.onclick = mailboxRestore;
+            }
+            
+            function applicaFiltroMittente(){ //Questa funzione viene invocata ogni volta che il filtro sul nome del mittente cambia valore
+                let fm = document.getElementById("filtroNomeMittente").value;
+                let rows = document.getElementsByClassName("tableRow");
+                for (el of rows){ //Il filtro applica a ogni riga un'espressione booleana che si basa su tre regole:
+                    //-Se la riga è una riga di intestazione, non può essere resa invisibile
+                    //-Se la riga è stata etichettata come "assolutamenteInvisibile", non può essere resa visibile
+                    //-Se la riga contiene un messaggio il cui mittente è diverso da quello specificato dal filtro, essa viene resa invisibile
+                    if (el.id!="tableHeaderRow" && (  (fm!="" && fm!=el.childNodes[2].innerHTML)  ||  (el.assolutamenteInvisibile==true) )  )
+                        el.hidden=true;
+                    else
+                        el.hidden=false;
+                } 
+            }
+<%
+    }
+    if(status=="utente"){
+//*****SOLO PER UTENTI SEMPLICI******       
+%>    
+            function homeInitialize(){ //Questa funzione viene lanciata appena viene completato il caricamento del tag <body> e si occupa di attivare i principali pulsanti di navigazione messi a disposizione degli utenti
+                document.getElementById("indexEsci").onclick = esci;
+                document.getElementById("indexRicerca").onclick = ricercaToPanel;
+                document.getElementById("indexPreferiti").onclick = preferitiToPanel;
+                document.getElementById("indexMessaggi").onclick = mailboxToPanel;
+                checkNuoviMessaggi(); //Una volta completata l'inizializzazione viene anche avviato il controllo volto a verificare l'eventuale presenza di messaggi non letti in mailbox
+            }
+
+            function ricercaToPanel(){ //Questa funzione si occupa di sostituire il contenuto del pannello principale con una tabella in cui figurano eventi a cui l'utente non è ancora iscritto
+                creaFiltriRicerca(); //Per prima cosa viene invocata una sottoprocedura che si occupa di creare il sottopannello in cui verrà messa la tabella nonché i filtri con cui si può restringere la rosa degli eventi visualizzati
+                document.getElementById("tableWrapper").innerHTML=`
+                    <table id="table">
+                        <tr class="tableRow" id="tableHeaderRow"><th class="tableHeader coloreScuro tablePaddingTier1">Nome:</th><th class="tableHeader coloreScuro tablePaddingTier2">Comune:</th><th class="tableHeader coloreScuro tablePaddingTier2">Inizio:</th><th class="tableHeader coloreScuro tablePaddingTier2">Fine:</th><th class="tableHeader coloreScuro tablePaddingTier2">Iscritti:</th><th class="tableHeader coloreScuro tablePaddingTier3"></th><th class="tableHeader coloreScuro tablePaddingTier3"></th><th class="tableHeader coloreScuro tablePaddingTier3"></th></tr>
+                    </table>
+                `; //Viene poi creata la tabella (insieme alla prima riga, che è di semplice intestazione)
+                let chiamata = new XMLHttpRequest();
+                chiamata.onload = function(){ //Per riempire la tabella si usa una chiamata AJAX per invocare un'API lato Server che restituisce gli Eventi a cui l'utente non è iscritto
+                    if (chiamata.status!=codeOk)
+                        document.getElementsByTagName("html")[0].innerHTML = chiamata.responseText;
+                    else{
+                        let dati = JSON.parse(chiamata.responseText); //Tramite i risultati forniti dal Server viene popolata la tabella
+                        let t = document.getElementById("table");
+                        let count = 1;
+                        for (row of dati){
+                            let nr = document.createElement('tr');
+                            tableRowAppendBaseFields(nr,count,row,ricercaTastoDettagli);
+                            let td = tableCreateTD("tablePaddingTier3","");
+                            let nb = tableCreateNewButton("Star.jpg", "Iscrivimi e aggiungi ai preferiti", "tastoIscrivi",count);
+                            nb.onclick = ricercaTastoIscrivi; //A ogni riga viene anche assegnato un tasto che l'utente può premere per iscriversi all'evento
+                            td.append(nb);
+                            nr.append(td);
+                            tableRowAddHiddenField(nr, "idSagra"+count, row.idsagra); //Nella tabella vengono anche inseriti due campi nascosti che non sono di interesse dell'utente ma servono per il funzionamento di alcuni tasti
+                            tableRowAddHiddenField(nr, "organizzatoreSagra"+count, row.organizzatoresagra);
+                            t.append(nr);
+                            count++;
+                        }
+                    }
+                }
+                chiamata.open("GET","/eventi");
+                chiamata.send();
+            }
+
+            function ricercaTastoIscrivi(){ //Questa funzione viene attivata quando un utente preme sul tasto di iscrizione a un evento
+                let count = this.rowCount; //Tramite l'attributo ad-hoc viene recuperato il contatore di riga
+                let row = document.getElementById(`tableRow${count}`); //Tramite il contatore di riga vengono recuperati l'elemento "riga" associato all'evento e l'id sagra che lo rappresenta nel database del server
+                let idsagra = document.getElementById(`idSagra${count}`).innerHTML;
+                let chiamata = new XMLHttpRequest(); //Tramite chiamata AJAX viene invocata un'API lato server che iscrive l'utente all'evento
+                chiamata.onload = function(){
+                    if (chiamata.status!=codeCreated)
+                        document.getElementsByTagName("html")[0].innerHTML = chiamata.responseText;
+                    else{
+                        row.hidden=true; //Se l'iscrizione ha successo la riga della tabella viene oscurata permanentemente, perché la funzionalità "Ricerca" riguarda solo gli eventi a cui l'utente non è già iscritto
+                        row.assolutamenteInvisibile=true;
+                    }
+                }
+                chiamata.open("POST","/iscrizione");
+                chiamata.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+                chiamata.send("idsagra="+idsagra);
+            }
+
+            function ricercaTastoDettagli(){ //Questa funzione viene attivata quando l'utente clicca sul tasto per visualizzare i dettagli di un evento
+                dettagliToPanel(this.rowCount, ricercaRestore); //La funzione si limita a invocare la sottoprocedura che riempie il pannello con i dettagli dell'evento, passando al tasto "Indietro" la funzione che riporta nel pannello la tabella degli eventi
+            }
+
+            function preferitiToPanel() { //Questa funzione si occupa di sostituire il contenuto del pannello principale con una tabella in cui figurano tutti gli eventi a cui l'utente è iscritto 
+                creaFiltriRicerca(); //Per prima cosa viene invocata una sottoprocedura che si occupa di creare il sottopannello in cui verrà messa la tabella nonché i filtri con cui si può restringere la rosa degli eventi visualizzati
+                document.getElementById("tableWrapper").innerHTML=`
+                    <table id="table">
+                        <tr class="tableRow" id="tableHeaderRow"><th class="tableHeader coloreScuro tablePaddingTier1">Nome:</th><th class="tableHeader coloreScuro tablePaddingTier2">Comune:</th><th class="tableHeader coloreScuro tablePaddingTier2">Inizio:</th><th class="tableHeader coloreScuro tablePaddingTier2">Fine:</th><th class="tableHeader coloreScuro tablePaddingTier2">Iscritti:</th><th class="tableHeader coloreScuro tablePaddingTier3"></th><th class="tableHeader coloreScuro tablePaddingTier3"></th><th class="tableHeader coloreScuro tablePaddingTier3"></th><th class="tableHeader coloreScuro tablePaddingTier3"></th></tr>
+                    </table>
+                `; //Vengono poi create la tabella e la sua prima riga (di intestazione)
+                let chiamata = new XMLHttpRequest(); //Per popolare la tabella si usa una chiamata AJAX per invocare un'API del Server tramite cui reperire tutti gli eventi a cui l'utente è iscritto
+                chiamata.onload = function(){
+                    if (chiamata.status!=codeOk)
+                        document.getElementsByTagName("html")[0].innerHTML = chiamata.responseText;
+                    else{
+                        let dati = JSON.parse(chiamata.responseText); //Tramite i risultati inviati dal Server viene popolata la tabella
+                        let t = document.getElementById("table");
+                        let count = 1;
+                        for (row of dati){
+                            let nr = document.createElement('tr');
+                            tableRowAppendBaseFields(nr,count,row,preferitiTastoDettagli);
+                            let td = tableCreateTD("tablePaddingTier3",""); //A ogni riga viene anche assegnato un tasto premendo il quale l'utente può scrivere un messaggio all'organizzatore della sagra
+                            let nb = tableCreateNewButton("Mail.jpg", "Scrivi all'organizzatore", "tastoScrivi",count);
+                            nb.onclick = preferitiTastoMail;
+                            td.append(nb);
+                            nr.append(td);
+                            td = tableCreateTD("tablePaddingTier3",""); //A ogni riga viene inoltre assegnato un tasto premendo il quale l'utente può annullare la sua iscrizione
+                            nb = tableCreateNewButton("Trash.jpg", "Annulla iscrizione e rimuovi dai preferiti", "tastoDisiscrivi",count);
+                            nb.onclick = preferitiTastoDisiscrivi;
+                            td.append(nb);
+                            nr.append(td);
+                            tableRowAddHiddenField(nr, "idSagra"+count, row.idsagra); //Anche in questa tabella vengono inclusi due campi nascosti che non sono di interesse dell'utente (ma servono per il funzionamento dei tasti)
+                            tableRowAddHiddenField(nr, "organizzatoreSagra"+count, row.organizzatoresagra);
+                            t.append(nr);
+                            count++;
+                        }
+                    }
+                }
+                chiamata.open("GET","/iscrizioni");
+                chiamata.send();
+            }
+
+            function preferitiTastoDettagli(){ //Questa funzione viene attivata quando l'utente preme sul tasto per visualizzare i dettagli aggiuntivi di un evento a cui è iscritto
+                dettagliToPanel(this.rowCount, preferitiRestore); //La funzione si limita a invocare la sottoprocedura che mostra i dettagli nel pannello, passando al tasto "Indietro" la funzione che procede a ripristinare la tabella degli eventi a cui l'utente è iscritto
+            }
+
+            function preferitiTastoMail(){ //Questa funzione viene attivata quando l'utente preme sul tasto per scrivere un messaggio all'organizzatore di un evento a cui è iscritto
+                messaggioNuovoToPanel(this.rowCount, "/messaggio", preferitiRestore); //La funzione si limita a chiamare la sottoprocedura che popola il pannello principale con il form con cui viene creato un nuovo messaggio, passando il contatore di riga, l'action da usare nella chiamata AJAX e la funzione da usare per il tasto "Indietro"
+            }
+
+            function preferitiTastoDisiscrivi(){ //Questa funzione viene attivata quando l'utente preme sul tasto di disiscrizione da un evento
+                let count = this.rowCount; //Per prima cosa viene recuperato il contatore di riga tramite l'attributo ad-hoc
+                let row = document.getElementById(`tableRow${count}`); //Tramite il contatore di riga viene recuperato l'id dell'elemento "riga" associato all'evento, oltre all'id sagra che rappresenta l'evento nel database del server
+                let idsagra = document.getElementById(`idSagra${count}`).innerHTML; 
+                let chiamata = new XMLHttpRequest(); //Con una chiamata AJAX viene invocata un'API del Server che procede a eliminare l'iscrizione dell'utente all'evento
+                chiamata.onload = function(){
+                    if (chiamata.status!=codeOkNoContent)
+                        document.getElementsByTagName("html")[0].innerHTML = chiamata.responseText;
+                    else{
+                        row.hidden=true; //Se la disiscrizione ha successo la riga associata all'evento viene oscurata, giacché la tabella deve includere solo eventi a cui l'utente è iscritto
+                        row.assolutamenteInvisibile=true;
+                    }
+                }
+                chiamata.open("DELETE","/iscrizione");
+                chiamata.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+                chiamata.send("idsagra="+idsagra);
+            }
+
+            function ricercaRestore(){ //Questa funzione viene invocata quando l'utente preme sul tasto "Indietro" di una delle funzionalità secondarie legate alla Ricerca di nuovi eventi
+                tableRestoreHTML(this); //La funzione invoca per prima cosa la sottoprocedura che ripristina il codice html salvato in precedenza
+                let nrows = document.getElementsByClassName("tableRow").length;
+                let count = 1; //Tramite un ciclo sulle righe della tabella vengono poi riattivati i pulsanti di ogni riga
+                while(count<nrows){
+                    let tastoDettagli = document.getElementById(`tastoDettagli${count}`);
+                    tastoDettagli.rowCount = count; //A ogni pulsante deve essere riassegnato il contatore di riga
+                    tastoDettagli.onclick = ricercaTastoDettagli; //A ogni pulsante deve essere riassegnata la funzione legata all'evento di click
+                    let tastoLoc = document.getElementById(`tastoLocandina${count}`);
+                    tastoLoc.rowCount = count;
+                    tastoLoc.onclick = tastoLocandina;
+                    let tastoIscrivi = document.getElementById(`tastoIscrivi${count}`);
+                    tastoIscrivi.rowCount = count;
+                    tastoIscrivi.onclick = ricercaTastoIscrivi;
+                    count++;
+                }
+            }
+
+            function preferitiRestore(){ //Questa funzione viene invocata quando l'utente preme sul tasto "Indietro" di una delle funzionalità secondarie legate alla visualizzazione degli eventi a cui l'utente è iscritto (i suoi Preferiti)
+                tableRestoreHTML(this); //La funzione agisce in modo del tutto analogo alla funzione di ripristino ricercaRestore (differiscono solo i pulsanti ripristinati)
+                let nrows = document.getElementsByClassName("tableRow").length;
+                let count = 1;
+                while(count<nrows){
+                    let tastoDettagli = document.getElementById(`tastoDettagli${count}`);
+                    tastoDettagli.rowCount = count;
+                    tastoDettagli.onclick = preferitiTastoDettagli;
+                    let tastoLoc = document.getElementById(`tastoLocandina${count}`);
+                    tastoLoc.rowCount = count;
+                    tastoLoc.onclick = tastoLocandina;
+                    let tastoDisiscrivi = document.getElementById(`tastoDisiscrivi${count}`);
+                    tastoDisiscrivi.rowCount = count;
+                    tastoDisiscrivi.onclick = preferitiTastoDisiscrivi;
+                    let tastoMail = document.getElementById(`tastoScrivi${count}`);
+                    tastoMail.rowCount = count;
+                    tastoMail.onclick = preferitiTastoMail;
+                    count++;
+                }
+            }
+<%
+    }
+    if(status=="organizzatore"){
+//*****SOLO PER ORGANIZZATORI******       
+%>
+            const lunghezzaMaxNomeSagra = 60;
+            const lunghezzaMaxIndirizzoSagra = 100;
+            const lunghezzaMaxDescrizioneSagra = 5000;
+
+            function homeInitialize(){ //Questa funzione viene lanciata appena viene completato il caricamento del tag <body> e si occupa di attivare i principali pulsanti di navigazione messi a disposizione degli organizzatori
+                document.getElementById("indexEsci").onclick = esci;
+                document.getElementById("indexNew").onclick = newToPanel;
+                document.getElementById("indexEventi").onclick = eventiToPanel;
+                document.getElementById("indexMessaggi").onclick = mailboxToPanel;
+                checkNuoviMessaggi(); //Una volta completata l'inizializzazione viene anche avviato il controllo volto a verificare l'eventuale presenza di messaggi non letti in mailbox
+            }
+
+            function newToPanel(){ //Questa funzione si occupa di popolare il pannello principale con un form che l'organizzatore può usare per creare un nuovo Evento
+                document.getElementById("indexPanel").innerHTML = `
+                    <div class="contentWrapper" >
+                        <form class="testoCentrato" action="/evento" method="POST" enctype="multipart/form-data">
+                            Nome evento:<br>
+                            <input id="newInputNome" class="inputField" type="text" name="nomeSagra">
+                            <div id="newErroreNome" class="ErrorMessage"></div><br>
+                            Comune:<br>
+                            <select id="newInputComune" class="inputField" name="comuneSagra"></select><br><br>
+                            Data:<br>
+                            <input id="newInputDataInizio" class="inputField"  type="date" name="dataInizioSagra">
+                            <div id="newErroreDataInizio" class="ErrorMessage"></div><br>
+                            <input id="newInputDataFine" class="inputField"  type="date" name="dataFineSagra">
+                            <div id="newErroreDataFine" class="ErrorMessage"></div><br>
+                            Indirizzo:<br>
+                            <input id="newInputIndirizzo" class="inputField"  type="text" name="indirizzoSagra">
+                            <div id="newErroreIndirizzo" class="ErrorMessage"></div><br>
+                            Descrizione:<br>
+                            <textArea id="newInputDescrizione" class="inputField inputTextArea"  type="textArea" name="descrizioneSagra"></textArea>
+                            <div id="newErroreDescrizione" class="ErrorMessage"></div><br>
+                            <label for="newInputLocandina" id="newLabelLocandina">Aggiungi Locandina<input id="newInputLocandina" class="inputField"  name="locandinaSagra" type="file" accept="image/jpg,image/jpeg"></label>
+                            <input type="text" id="newLocandinaEsiste" name="locandinaEsiste" hidden="true">
+                            <div class="testoPiccolo" id="newFileSelezionato">Max 5MB, solo .jpg o .jpeg</div><br>
+                            <input id="newFalsoSubmit" class="coloreScuro ampiezza100" type="button" value="Invia">
+                            <input id="newVeroSubmit" type="submit" hidden="true">
+                        </form>
+                    </div>
+                `;
+                let chiamata = new XMLHttpRequest();
+                chiamata.onload = function(){ //Il comune in cui ha luogo l'evento deve appartenere a una lista ben precisa, che viene ottenuta invocando un'API del Server tramite chiamata AJAX
+                    if (chiamata.status!=codeOk)
+                        document.getElementsByTagName("html")[0].innerHTML = chiamata.responseText;
+                    else{
+                        let sel = document.getElementById("newInputComune");
+                        let b = JSON.parse(chiamata.responseText);
+                        for (a of b){ //I risultati della chiamata al Server vengono usati per popolare un menù a tendina creato tramite tag <select> e <option>
+                            let com = document.createElement('option');
+                            com.innerHTML=a.comune;
+                            sel.append(com);
+                        }
+                    }
+                }
+                chiamata.open("GET","/comuni");
+                chiamata.send();
+                document.getElementById("newFalsoSubmit").onclick = newControlliFinali; //Il tasto "Submit" visibile nel form è in realtà un "falso submit" la cui pressione attiva una serie di controlli preliminari prima di procedere all'invio vero e proprio
+                document.getElementById("newInputLocandina").onchange = newAggiornaFileSelezionato; //Se l'organizzatore carica una locandina viene attivata una funzione che procede a mostrare nel form il nome del file selezionato
+            }
+
+            function newControlliFinali(){ //Questa funzione viene invocata quando l'organizzatore preme sul tasto "Invia" del form per la creazione di un nuovo evento
+                let nome = document.getElementById("newInputNome");
+                let comune = document.getElementById("newInputComune");
+                let dataInizio = document.getElementById("newInputDataInizio");
+                let dataFine = document.getElementById("newInputDataFine");
+                let indirizzo = document.getElementById("newInputIndirizzo");
+                let descrizione = document.getElementById("newInputDescrizione");
+                nome.classList.remove("RedBorder"); //Prima di procedere ai controlli, si eliminano eventuali bordi rossi e messaggi di errore legati a controlli precedenti
+                comune.classList.remove("RedBorder");
+                dataInizio.classList.remove("RedBorder");
+                indirizzo.classList.remove("RedBorder");
+                descrizione.classList.remove("RedBorder");
+                let a = document.getElementsByClassName("ErrorMessage");
+                for (el of a)
+                    el.innerHTML="";
+                let invia = true;
+                if (nome.value==""){ //Se non viene specificato un nome per l'evento viene innescato un errore
+                    nome.classList.add("RedBorder");
+                    document.getElementById("newErroreNome").innerHTML = "&egrave obbligatorio inserire un nome.";
+                    invia = false;
+                }
+                else if (nome.value.length>lunghezzaMaxNomeSagra){ //Se il nome dell'evento è troppo lungo viene innescato un errore
+                    nome.classList.add("RedBorder");
+                    document.getElementById("newErroreNome").innerHTML = "nome troppo lungo. Max "+lunghezzaMaxNomeSagra+" caratteri.";
+                    invia = false;
+                }
+                if (comune.value==""){ //Se non viene specificato un comune viene innescato un errore
+                    comune.classList.add("RedBorder");
+                    document.getElementById("newErroreComune").innerHTML = "&egrave obbligatorio inserire un comune.";
+                    invia = false;
+                }
+                if (dataInizio.value==""){ //Se non viene specificata una data di inizio viene innescato un errore
+                    dataInizio.classList.add("RedBorder");
+                    document.getElementById("newErroreData").innerHTML = "&egrave obbligatorio inserire una data.";
+                    invia = false;
+                }
+                else { //Sono accettate solo date future, in caso contrario viene innescato un errore
+                    let millisec = new Date(dataInizio.value);
+                    if (Date.now() > millisec){
+                        dataInizio.classList.add("RedBorder");
+                        document.getElementById("newErroreDataInizio").innerHTML = "sono accettate solo date future.";
+                        invia = false;
+                    }
+                }
+                if (dataFine.value==""){ //Se non viene specificata una data di fine viene innescato un errore
+                    dataFine.classList.add("RedBorder");
+                    document.getElementById("newErroreDataFine").innerHTML = "&egrave obbligatorio inserire una data.";
+                    invia = false;
+                }
+                else { //Sono accettate solo date future, in caso contrario viene innescato un errore
+                    let millisec = new Date(dataFine.value);
+                    if (Date.now() > millisec){
+                        dataFine.classList.add("RedBorder");
+                        document.getElementById("newErroreDataFine").innerHTML = "sono accettate solo date future.";
+                        invia = false;
+                    }
+                    else{ //Se la data di fine precede la data di inizio, viene innescato un errore
+                        let millisecInizio = new Date(dataInizio.value);
+                        if (millisecInizio > millisec){
+                            dataFine.classList.add("RedBorder");
+                            document.getElementById("newErroreDataFine").innerHTML = "la data di fine non pu&ograve precedere la data di inizio.";
+                            invia = false; 
+                        }
+                    }
+                }
+                if (indirizzo.value == ""){ //Se non viene specificato un indirizzio viene innescato un errore
+                    indirizzo.classList.add("RedBorder");
+                    document.getElementById("newErroreIndirizzo").innerHTML = "&egrave obbligatorio inserire un indirizzo.";
+                    invia = false;
+                }
+                else if (indirizzo.value.length > lunghezzaMaxIndirizzoSagra){ //Se l'indirizzo specificato è troppo lungo viene innescato un errore
+                    indirizzo.classList.add("RedBorder");
+                    document.getElementById("newErroreIndirizzo").innerHTML = "indirizzo troppo lungo. Max "+lunghezzaMaxIndirizzoSagra+" caratteri.";
+                    invia = false;
+                }
+                if (descrizione.value.length > lunghezzaMaxDescrizioneSagra){ //Se la descrizione specificata è troppo lunga viene innescato un errore
+                    descrizione.classList.add("RedBorder");
+                    document.getElementById("newErroreDescrizione").innerHTML = "descrizione troppo lunga. Max "+lunghezzaMaxDescrizioneSagra+" caratteri.";
+                    invia = false;
+                }
+                if (invia) //Se non vengono rilevati errori si procede all'invio del form premendo il vero tasto di Submit (che normalmente è nascosto)
+                    document.getElementById("newVeroSubmit").click();
+            }
+
+            function newAggiornaFileSelezionato(){ //Questa funzione viene invocata quando l'organizzatore carica un nuovo file come locandina di un evento che sta creando
+                document.getElementById("newFileSelezionato").innerHTML = document.getElementById("newInputLocandina").value; //La scritta che normalmente riporta i limiti di estensione e dimensione viene cambiata per indicare esplicitamente il nome del file scelto
+                document.getElementById("newLocandinaEsiste").value="si"; //Un parametro nascosto viene cambiato per far sì che il Server sappia che l'evento che sta venendo creato include anche una locandina
+            }
+
+            function eventiToPanel(){ //Questa funzione si occupa di popolare il pannello con una tabella in cui figurano tutti gli eventi creati da un organizzatore
+                creaFiltriRicerca(); //Per prima cosa viene invocata la sottoprocedura che si occupa di creare il sottopannello della tabella e i filtri associati
+                document.getElementById("tableWrapper").innerHTML=`
+                    <table id="table">
+                        <tr class="tableRow" id="tableHeaderRow"><th class="tableHeader coloreScuro tablePaddingTier1">Nome:</th><th class="tableHeader coloreScuro tablePaddingTier2">Comune:</th><th class="tableHeader coloreScuro tablePaddingTier2">Inizio:</th><th class="tableHeader coloreScuro tablePaddingTier2">Fine:</th><th class="tableHeader coloreScuro tablePaddingTier2">Iscritti:</th><th class="tableHeader coloreScuro tablePaddingTier3"></th><th class="tableHeader coloreScuro tablePaddingTier3"></th><th class="tableHeader coloreScuro tablePaddingTier3"></th><th class="tableHeader coloreScuro tablePaddingTier3"></th></tr>
+                    </table>
+                `; //Vengono poi create la tabella e la sua prima riga (di intestazione)
+                let chiamata = new XMLHttpRequest(); //Per popolare la tabella viene usata una chiamata AJAX con cui viene invocata un'API lato Server che restituisce tutti gli eventi il cui organizzatore è il chiamante
+                chiamata.onload = function(){
+                    if (chiamata.status!=codeOk)
+                        document.getElementsByTagName("html")[0].innerHTML = chiamata.responseText;
+                    else{
+                        let dati = JSON.parse(chiamata.responseText); //I risultati della chiamata vengono usati per popolare la tabella
+                        let t = document.getElementById("table");
+                        let count = 1;
+                        for (row of dati){
+                            let nr = document.createElement('tr');
+                            tableRowAppendBaseFields(nr,count,row,eventTastoDettagli);
+                            let td = tableCreateTD("tablePaddingTier3",""); //A ogni evento viene associato anche un pulsante che l'organizzatore può premere per creare un messaggio che verrà recapitato a tutti gli iscritti
+                            let nb = tableCreateNewButton("Mail.jpg", "Scrivi ai partecipanti", "tastoScrivi",count);
+                            nb.onclick = eventTastoMail;
+                            td.append(nb);
+                            nr.append(td);
+                            td = tableCreateTD("tablePaddingTier3",""); //A ogni evento viene anche associato un tasto tramite cui l'organizzatore può cancellare completamente l'evento
+                            nb = tableCreateNewButton("Trash.jpg", "Cancella l'evento", "tastoCancellaEvento",count);
+                            nb.onclick = eventTastoCancella;
+                            td.append(nb);
+                            nr.append(td);
+                            tableRowAddHiddenField(nr, "idSagra"+count, row.idsagra); //Viene inoltre aggiunto un campo nascosto a ogni riga in cui viene salvato l'id che rappresenta l'evento nel database del Server
+                            t.append(nr);
+                            count++;
+                        }
+                    }
+                }
+                chiamata.open("GET","/eventi");
+                chiamata.send();
+            }
+            
+            function eventTastoDettagli(){ //Questa funzione viene attivata quando l'organizzatore preme sul tasto per visualizzare i dettagli aggiuntivi di un evento da lui organizzato
+                dettagliToPanel(this.rowCount, eventRestore); //La funzione si limita a invocare una sottoprocedura con cui vengono mostrati i dettagli, passando al tasto "Indietro" la funzione di ripristino che ricrea la tabella eventi dell'organizzatore
+            }
+            
+            function eventTastoMail(){ //Questa funzione viene attivata quando l'organizzatore preme sul tasto per inviare un messaggio a tutti gli iscritti di un evento
+                messaggioNuovoToPanel(this.rowCount, "/broadcast", eventRestore); //La funzione si limita a invocare la sottoprocedura che si fa carico di creare il form con cui creare il nuovo messaggio, passando come parametro il contatore di riga, la modalità "broadcast" e la funzione da assegnare al tasto "Indietro"
+            }
+            
+            function eventRestore(){ //Questa funzione viene invocata quando l'organizzatore preme sul tasto "Indietro" associato a una funzionalità secondaria legata agli eventi creati da lui
+                tableRestoreHTML(this); //La funzione si comporta in modo molto simile alle funzioni di ripristino ricercaRestore e preferitiRestore (differiscono solo i tasti che vengono riattivati)
+                let nrows = document.getElementsByClassName("tableRow").length;
+                let count = 1;
+                while(count<nrows){
+                    let tastoDettagli = document.getElementById(`tastoDettagli${count}`);
+                    tastoDettagli.rowCount = count;
+                    tastoDettagli.onclick = eventTastoDettagli;
+                    let tastoLoc = document.getElementById(`tastoLocandina${count}`);
+                    tastoLoc.rowCount = count;
+                    tastoLoc.onclick = tastoLocandina;
+                    let tastoCancella = document.getElementById(`tastoCancellaEvento${count}`);
+                    tastoCancella.rowCount = count;
+                    tastoCancella.onclick = eventTastoCancella;
+                    let tastoMail = document.getElementById(`tastoScrivi${count}`);
+                    tastoMail.rowCount = count;
+                    tastoMail.onclick = eventTastoMail;
+                    count++;
+                }
+            }
+
+            function eventTastoCancella(){ //Questa funzione viene invocata quando l'organizzatore preme sul tasto per cancellare un evento
+                let filtroComune = document.getElementById("filtroComune").value;
+                let filtroData = document.getElementById("filtroData").value;
+                let formerHTML = document.getElementById("indexPanel").innerHTML; //La funzione per prima cosa salva lo stato del pannello in delle variabili locali
+                let count = this.rowCount; //La funzione procede poi a recuperare l'indice di riga dall'attributo ad-hoc
+                let nomeSagra = document.getElementById(`nomeSagra${count}`).innerHTML; //Tramite l'indice di riga vengono salvati a parte alcuni campi dell'evento che sta per essere cancellato
+                let comuneSagra = document.getElementById(`comuneSagra${count}`).innerHTML;
+                let dataInizioSagra = document.getElementById(`dataInizioSagra${count}`).innerHTML;
+                let dataFineSagra = document.getElementById(`dataFineSagra${count}`).innerHTML;
+                let idSagra = document.getElementById(`idSagra${count}`).innerHTML; //Viene inoltre reperito l'id dell'evento da cancellare
+                document.getElementById("indexPanel").innerHTML=`
+                    <div class="contentWrapper">
+                        <form class="testoCentrato" action="/evento?_method=DELETE" method="post">
+                            <div class="testoMedio">Il seguente evento sta per essere eliminato:</div><br>
+                            <div class="testoMedio">
+                                <span class="testoImportante" id="eventConfermaCancellazioneNome"></span>, a 
+                                <span class="testoImportante" id="eventConfermaCancellazioneComune"></span>, dal 
+                                <span class="testoImportante" id="eventConfermaCancellazioneDataInizio"></span>, al
+                                <span class="testoImportante" id="eventConfermaCancellazioneDataFine"></span>
+                            </div><br>
+                            <div class="testoMedio">L'operazione non &egrave reversibile. Continuare?</div><br><br>
+                            <input id="eliminaEventoID" name="idsagra" type="number" hidden="true">
+                            <input id="eventCancelSubmit" type="submit" class="coloreScuro ampiezza100 twinElements" value="Conferma">
+                            <input id="tastoIndietro" type="button" class="coloreScuro ampiezza100 twinElements" value="Indietro"><br>
+                        </form>
+                    </div>
+                `; //Il contenuto del pannello viene quindi sostituito con un messaggio in cui vengono specificati i dettagli dell'evento che sta per essere cancellato e in cui viene ricordato che l'operazione non è reversibile
+                let tastoIndietro = document.getElementById("tastoIndietro");
+                tastoIndietro.filtroComune = filtroComune;
+                tastoIndietro.filtroData = filtroData;
+                tastoIndietro.formerHTML = formerHTML;
+                tastoIndietro.onclick = eventRestore; //Al click del tasto Indietro viene assegnata la funzione di ripristino della tabella, mentre lo stato precedente della tabella viene conservato in degli attributi ad-hoc
+                document.getElementById("eliminaEventoID").value = idSagra; //L'id della sagra da eliminare viene messo in un campo nascosto del form in modo che il Server possa riceverlo
+                document.getElementById("eventConfermaCancellazioneNome").innerHTML = nomeSagra;
+                document.getElementById("eventConfermaCancellazioneComune").innerHTML = comuneSagra;
+                document.getElementById("eventConfermaCancellazioneDataInizio").innerHTML = dataInizioSagra;
+                document.getElementById("eventConfermaCancellazioneDataFine").innerHTML = dataFineSagra;
+            }
+<%
+    }      
+%>
+        </script>
+    </head>
+    <body onload="homeInitialize()">
+        <div id="indexMaster">
+            <img id="indexLogo" src="<%=urlLogo%>Logo.jpg">
+            <div class="navigationBar" id="indexOptionbar">
+                <div class="navigationElement navigationFirst" id="indexElementoSinistro">
+                    <% 
+                        if (status!="unknown"){
+                            %>Logged in as: <%=username%><%
+                        }
+                    %>
+                </div>
+                <% 
+                switch (status){
+                    case "unknown":
+                        %>
+                            <button title="Effettua l'accesso" class="navigationElement" id="indexAccedi">Accedi</button>
+                            <button title="Crea un nuovo utente" class="navigationElement navigationLast" id="indexRegistrati">Registrati</button>
+                        <%
+                        break;
+                    case "utente":
+                        %>
+                            <button title="Trova eventi vicino a te" class="navigationElement" id="indexRicerca">Ricerca</button>
+                            <button title="Eventi a cui sei iscritto" class="navigationElement" id="indexPreferiti">Preferiti</button>
+                            <button title="Messaggi ricevuti" class="navigationElement" id="indexMessaggi">Messaggi</button>
+                            <button title="Clicca per disconnetterti" class="navigationElement navigationLast" id="indexEsci">Esci</button>
+                        <%
+                        break;
+                    case "organizzatore":
+                        %>
+                            <button title="Lista degli eventi da te pubblicati" class="navigationElement" id="indexEventi">Eventi</button>
+                            <button title="Crea un nuovo evento" class="navigationElement" id="indexNew">New</button>
+                            <button title="Messaggi ricevuti" class="navigationElement" id="indexMessaggi">Messaggi</button>
+                            <button title="Clicca per disconnetterti" class="navigationElement navigationLast" id="indexEsci">Esci</button>
+                        <%
+                        break;
+                    default:         
+                }
+                %>
+            </div>
+            <div id="indexPanel"></div>
+        </div> 
+    </body>
+</html>
